@@ -194,21 +194,27 @@ loadbar_draw_character_on() {
 	printf "%s" "$(printf ":%${2}s:" | sed -e "s/ /${1}/g" -e 's/://g')"
 }
 
+loadbar_display_bar_once() {
+	lb_value_once=$1
+
+	loadbar_validate_value $lb_value_once || continue
+	loadbar_compute_bar_size
+	[ -n "$lb_title" ] && printf "%s" "$lb_title"
+	[ -z "$lb_show_no_color" ] && printf "%b" "${lb_fill_color}"
+	lb_percentage=$((lb_value_once * 100 / lb_max))
+	lb_fill_size=$((lb_bar_size * lb_percentage / 100))
+	loadbar_draw_character_on "${lb_fill_character}" "$lb_fill_size"
+	lb_empty_size=$((lb_bar_size - lb_fill_size))
+	loadbar_draw_character_on "${lb_background_character}" "${lb_empty_size}"
+	[ -z "$lb_show_no_color" ] && printf "%b" "${lb_reset_color}"
+	[ -n "$lb_show_percentage" ] && printf "%${lb_percentage_size}s" "[${lb_percentage}%]"
+	[ -n "$lb_show_value" ] && printf "%${lb_value_progress_size}s" " [${lb_value_once}/${lb_max}]"
+	printf "\r"
+}
+
 loadbar_display_bar() {
 	while read -r lb_value; do
-		loadbar_validate_value $lb_value || continue
-		loadbar_compute_bar_size
-		[ -n "$lb_title" ] && printf "%s" "$lb_title"
-		[ -z "$lb_show_no_color" ] && printf "%b" "${lb_fill_color}"
-		lb_percentage=$((lb_value * 100 / lb_max))
-		lb_fill_size=$((lb_bar_size * lb_percentage / 100))
-		loadbar_draw_character_on "${lb_fill_character}" "$lb_fill_size"
-		lb_empty_size=$((lb_bar_size - lb_fill_size))
-		loadbar_draw_character_on "${lb_background_character}" "${lb_empty_size}"
-		[ -z "$lb_show_no_color" ] && printf "%b" "${lb_reset_color}"
-		[ -n "$lb_show_percentage" ] && printf "%${lb_percentage_size}s" "[${lb_percentage}%]"
-		[ -n "$lb_show_value" ] && printf "%${lb_value_progress_size}s" " [${lb_value}/${lb_max}]"
-		printf "\r"
+		loadbar_display_bar_once $lb_value
 	done
 }
 
