@@ -2,8 +2,6 @@
 
 . ./loadbar_api
 
-loadbar_parse_long "$@"
-loadbar_init_values
-loadbar_validate_values
+loadbar_init "$@"
 loadbar_display_bar
 echo

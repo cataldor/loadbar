@@ -175,6 +175,12 @@ loadbar_validate_values() {
 	return 0
 }
 
+loadbar_init() {
+	loadbar_parse_long "$@"
+	loadbar_init_values
+	loadbar_validate_values
+}
+
 loadbar_is_number() {
 	printf '%d' "${1}" >/dev/null 2>&1
 }
