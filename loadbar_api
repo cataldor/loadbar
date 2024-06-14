@@ -176,6 +176,7 @@ loadbar_validate_values() {
 }
 
 loadbar_init() {
+	unset opt OPTARG OPTIND
 	loadbar_parse_long "$@"
 	loadbar_init_values
 	loadbar_validate_values
