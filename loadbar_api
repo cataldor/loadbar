@@ -157,6 +157,7 @@ loadbar_init_values() {
 	[ -z "${lb_title:-}" ] && lb_title="" || lb_title="$lb_title "
 	[ -z "${lb_show_percentage:-}" ] && lb_show_percentage=''
 	[ -z "${lb_show_value:-}" ] && lb_show_value=''
+	[ -z "${lb_show_no_color:-}" ] && lb_show_no_color=''
 	lb_title_size="${#lb_title}"
 	lb_max=${lb_max:-100}
 	lb_value_progress=" [${lb_max}/${lb_max}]"

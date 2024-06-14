@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -u
+
 . ./loadbar_api
 
 display_bar_ntimes() {
