@@ -1,4 +1,12 @@
 #!/usr/bin/env sh
+# API for loadbar
+# all functions are prefixed with loadbar_
+# all variables are prefixied with lb_
+#
+# While the script is loaded, the cursor is hidden (civis), but it is restored
+# when SIGEXIT is received (cnorm)
+#
+# Another trap is employed for SIGWINCH to reposition cursor to the end (rc, ed)
 
 trap "tput cnorm" EXIT
 tput civis
@@ -6,7 +14,7 @@ tput civis
 tput sc
 trap "tput rc; tput ed" WINCH
 
-print_usage() {
+loadbar_print_usage() {
 	cat <<EOF
 Usage: $(basename "$0")  [OPTION...]
 Display progress bar by reading values from stdin.
@@ -23,116 +31,116 @@ Display progress bar by reading values from stdin.
 EOF
 }
 
-check_arg_for() {
+loadbar_check_arg_for() {
 	[ "$2" ] || {
 		echo "Err: $1 requires a non-empty option argument" 2>&1
 		exit 1
 	}
 }
 
-parse_args() {
-	while getopts ":t:m:s:f:b:pvnh" option "$@"; do
-		case "${option}" in
-		t) title="${OPTARG}" ;;
-		m) max="${OPTARG}" ;;
-		s) size="${OPTARG}" ;;
-		p) show_percentage=true ;;
-		v) show_value=true ;;
-		f) fill_character="${OPTARG}" ;;
-		b) background_character="${OPTARG}" ;;
-		n) show_no_color=true ;;
+loadbar_parse_args() {
+	while getopts ":t:m:s:f:b:pvnh" lb_option "$@"; do
+		case "${lb_option}" in
+		t) lb_title="${OPTARG}" ;;
+		m) lb_max="${OPTARG}" ;;
+		s) lb_size="${OPTARG}" ;;
+		p) lb_show_percentage=true ;;
+		v) lb_show_value=true ;;
+		f) lb_fill_character="${OPTARG}" ;;
+		b) lb_background_character="${OPTARG}" ;;
+		n) lb_show_no_color=true ;;
 		h)
-			print_usage
+			loadbar_print_usage
 			exit 0
 			;;
 		*)
-			echo "Invalid arg: ${option}" >&2
-			print_usage
+			echo "Invalid arg: ${lb_option}" >&2
+			loadbar_print_usage
 			exit 1
 			;;
 		esac
 	done
 }
 
-parse_long() {
-	i=0
-	args_count=$#
-	while [ $i -lt $args_count ]; do
-		i=$((i + 1))
+loadbar_parse_long() {
+	lb_i=0
+	lb_args_count=$#
+	while [ $lb_i -lt $lb_args_count ]; do
+		lb_i=$((lb_i + 1))
 		case "$1" in
 		--title)
-			title="$2"
+			lb_title="$2"
 			shift 2
-			i=$((i += 1)) continue
+			lb_i=$((lb_i += 1)) continue
 			;;
 		--title=*)
-			title="${1#*=}"
+			lb_title="${1#*=}"
 			shift
 			continue
 			;;
 		--max-value)
-			max="$2"
+			lb_max="$2"
 			shift 2
-			i=$((i += 1))
+			lb_i=$((lb_i += 1))
 			continue
 			;;
 		--max-value=*)
-			max="${1#*=}"
+			lb_max="${1#*=}"
 			shift
 			continue
 			;;
 		--size)
-			size="$2"
+			lb_size="$2"
 			shift 2
-			i=$((i += 1))
+			lb_i=$((lb_i += 1))
 			continue
 			;;
 		--size=*)
-			size="${1#*=}"
+			lb_size="${1#*=}"
 			shift
 			continue
 			;;
 		--fill)
-			fill_character="$2"
+			lb_fill_character="$2"
 			shift 2
-			i=$((i += 1))
+			lb_i=$((lb_i += 1))
 			continue
 			;;
 		--fill=*)
-			fill_character="$2"
+			lb_fill_character="$2"
 			shift
-			i=$((i += 1))
+			lb_i=$((lb_i += 1))
 			continue
 			;;
 		--background)
-			background_character="$2"
+			lb_background_character="$2"
 			shift 2
-			i=$((i += 1))
+			lb_i=$((lb_i += 1))
 			continue
 			;;
 		--background=*)
-			background_character="${1#*=}"
+			lb_background_character="${1#*=}"
 			shift 2
-			i=$((i += 1))
+			lb_i=$((lb_i += 1))
 			continue
 			;;
 		--percentage)
-			show_percentage=true
+			lb_show_percentage=true
 			shift
 			continue
 			;;
 		--value)
-			show_value=true
+			lb_show_value=true
 			shift
 			continue
 			;;
 		--no-color)
-			show_no_color=true
+			lb_show_no_color=true
 			shift
 			continue
 			;;
 		--help)
-			print_usage
+			loadbar_print_usage
 			exit 0
 			continue
 			;;
@@ -142,64 +150,64 @@ parse_long() {
 			;;
 		esac
 	done
-	parse_args "$@"
+	loadbar_parse_args "$@"
 }
 
-init_values() {
-	[ -z "${title:-}" ] && title="" || title="$title "
-	[ -z "${show_percentage:-}" ] && show_percentage=''
-	[ -z "${show_value:-}" ] && show_value=''
-	title_size="${#title}"
-	max=${max:-100}
-	value_progress=" [${max}/${max}]"
-	value_progress_size=${#value_progress}
-	percentage=" [100%]"
-	percentage_size=${#percentage}
-	fill_character=${fill_character:-█}
-	background_character=${background_character:-░}
-	fill_color=$(tput setaf 2)
-	reset_color=$(tput sgr0)
+loadbar_init_values() {
+	[ -z "${lb_title:-}" ] && lb_title="" || lb_title="$lb_title "
+	[ -z "${lb_show_percentage:-}" ] && lb_show_percentage=''
+	[ -z "${lb_show_value:-}" ] && lb_show_value=''
+	lb_title_size="${#lb_title}"
+	lb_max=${lb_max:-100}
+	lb_value_progress=" [${lb_max}/${lb_max}]"
+	lb_value_progress_size=${#lb_value_progress}
+	lb_percentage=" [100%]"
+	lb_percentage_size=${#lb_percentage}
+	lb_fill_character=${lb_fill_character:-█}
+	lb_background_character=${lb_background_character:-░}
+	lb_fill_color=$(tput setaf 2)
+	lb_reset_color=$(tput sgr0)
 }
 
-validate_values() {
-	[ ! "${#fill_character}" -eq 1 ] && [ ! "$(printf "%s" "$fill_character" | wc -m)" -eq 1 ] && echo "Invalid character ${fill_character}: Fill charachter should be of size 1" >&2 && exit 1
-	[ ! ${#background_character} -eq 1 ] && [ ! "$(printf "%s" "$background_character" | wc -m)" -eq 1 ] && echo "Invalid character '${background_character}': Background character should be of size 1" >&2 && exit 1
+loadbar_validate_values() {
+	[ ! "${#lb_fill_character}" -eq 1 ] && [ ! "$(printf "%s" "$lb_fill_character" | wc -m)" -eq 1 ] && echo "Invalid character ${lb_fill_character}: Fill charachter should be of size 1" >&2 && exit 1
+	[ ! ${#lb_background_character} -eq 1 ] && [ ! "$(printf "%s" "$lb_background_character" | wc -m)" -eq 1 ] && echo "Invalid character '${lb_background_character}': Background character should be of size 1" >&2 && exit 1
 	return 0
 }
 
-is_number() {
+loadbar_is_number() {
 	printf '%d' "${1}" >/dev/null 2>&1
 }
 
-validate_value() {
-	is_number "$1" && [ "$1" -le "$max" ] && [ "$1" -ge 0 ]
+loadbar_validate_value() {
+	loadbar_is_number "$1" && [ "$1" -le "$lb_max" ] && [ "$1" -ge 0 ]
 }
 
-compute_bar_size() {
-	bar_size=${size:-$(tput cols)}
-	[ -z "$title" ] || bar_size=$((bar_size - title_size))
-	[ -z "$show_percentage" ] || bar_size=$((bar_size - percentage_size))
-	[ -z "$show_value" ] || bar_size=$((bar_size - value_progress_size))
+loadbar_compute_bar_size() {
+	lb_bar_size=${lb_size:-$(tput cols)}
+	[ -z "$lb_title" ] || lb_bar_size=$((lb_bar_size - lb_title_size))
+	[ -z "$lb_show_percentage" ] || lb_bar_size=$((lb_bar_size - lb_percentage_size))
+	[ -z "$lb_show_value" ] || lb_bar_size=$((lb_bar_size - lb_value_progress_size))
 }
 
-draw_character_on() {
+loadbar_draw_character_on() {
 	printf "%s" "$(printf ":%${2}s:" | sed -e "s/ /${1}/g" -e 's/://g')"
 }
 
-display_bar() {
-	while read -r value; do
-		validate_value $value || continue
-		compute_bar_size
-		[ -n "$title" ] && printf "%s" "$title"
-		[ -z "$show_no_color" ] && printf "%b" "${fill_color}"
-		percentage=$((value * 100 / max))
-		fill_size=$((bar_size * percentage / 100))
-		draw_character_on "${fill_character}" "$fill_size"
-		empty_size=$((bar_size - fill_size))
-		draw_character_on "${background_character}" "${empty_size}"
-		[ -z "$show_no_color" ] && printf "%b" "${reset_color}"
-		[ -n "$show_percentage" ] && printf "%${percentage_size}s" "[${percentage}%]"
-		[ -n "$show_value" ] && printf "%${value_progress_size}s" " [${value}/${max}]"
+loadbar_display_bar() {
+	while read -r lb_value; do
+		loadbar_validate_value $lb_value || continue
+		loadbar_compute_bar_size
+		[ -n "$lb_title" ] && printf "%s" "$lb_title"
+		[ -z "$lb_show_no_color" ] && printf "%b" "${lb_fill_color}"
+		lb_percentage=$((lb_value * 100 / lb_max))
+		lb_fill_size=$((lb_bar_size * lb_percentage / 100))
+		loadbar_draw_character_on "${lb_fill_character}" "$lb_fill_size"
+		lb_empty_size=$((lb_bar_size - lb_fill_size))
+		loadbar_draw_character_on "${lb_background_character}" "${lb_empty_size}"
+		[ -z "$lb_show_no_color" ] && printf "%b" "${lb_reset_color}"
+		[ -n "$lb_show_percentage" ] && printf "%${lb_percentage_size}s" "[${lb_percentage}%]"
+		[ -n "$lb_show_value" ] && printf "%${lb_value_progress_size}s" " [${lb_value}/${lb_max}]"
 		printf "\r"
 	done
 }
