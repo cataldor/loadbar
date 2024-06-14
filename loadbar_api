@@ -171,7 +171,7 @@ loadbar_init_values() {
 }
 
 loadbar_validate_values() {
-	[ ! "${#lb_fill_character}" -eq 1 ] && [ ! "$(printf "%s" "$lb_fill_character" | wc -m)" -eq 1 ] && echo "Invalid character ${lb_fill_character}: Fill charachter should be of size 1" >&2 && exit 1
+	[ ! "${#lb_fill_character}" -eq 1 ] && [ ! "$(printf "%s" "$lb_fill_character" | wc -m)" -eq 1 ] && echo "Invalid character ${lb_fill_character}: Fill character should be of size 1" >&2 && exit 1
 	[ ! ${#lb_background_character} -eq 1 ] && [ ! "$(printf "%s" "$lb_background_character" | wc -m)" -eq 1 ] && echo "Invalid character '${lb_background_character}': Background character should be of size 1" >&2 && exit 1
 	return 0
 }
